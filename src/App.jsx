@@ -3,6 +3,8 @@ import { GuestRoute, ProtectedRoute } from './auth/RouteGuards.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ChatPage from './pages/ChatPage.jsx';
+import ConversationPage from './pages/ConversationPage.jsx';
+import EmptyChat from './components/EmptyChat.jsx';
 
 export default function App() {
   return (
@@ -13,8 +15,10 @@ export default function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<ChatPage />} />
-        <Route path="/c/:conversationId" element={<ChatPage />} />
+        <Route element={<ChatPage />}>
+          <Route index element={<EmptyChat />} />
+          <Route path="c/:conversationId" element={<ConversationPage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
