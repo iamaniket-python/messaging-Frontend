@@ -69,6 +69,10 @@ export function messagesReducer(state, action) {
     case 'LOAD_MORE_ERROR':
       return { ...state, loadingMore: false, loadMoreError: action.error };
 
+    // Reconnect gap sync: sirf merge, pagination state touch nahi
+    case 'MERGE':
+      return { ...state, items: upsertMany(state.items, action.messages) };
+
     case 'OPTIMISTIC_ADD':
       return { ...state, items: sortItems([...state.items, action.message]) };
 

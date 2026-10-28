@@ -1,6 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 
-export default function MessageComposer({ onSend }) {
+export default function MessageComposer({ onSend, onTyping, onStopTyping }) {
   const [text, setText] = useState('');
   const ref = useRef(null);
 
@@ -11,9 +11,17 @@ export default function MessageComposer({ onSend }) {
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, [text]);
 
+  function handleChange(e) {
+    const value = e.target.value;
+    setText(value);
+    if (value.trim()) onTyping?.();
+    else onStopTyping?.();
+  }
+
   function submit() {
     const content = text.trim();
     if (!content) return;
+    onStopTyping?.();
     onSend(content);
     setText('');
     ref.current?.focus();
@@ -31,8 +39,9 @@ export default function MessageComposer({ onSend }) {
       <textarea
         ref={ref}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={handleChange}
         onKeyDown={onKeyDown}
+        onBlur={() => onStopTyping?.()}
         maxLength={4000}
         rows={1}
         placeholder="Write a message..."

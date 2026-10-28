@@ -1,4 +1,5 @@
-﻿import { useState } from 'react';
+﻿import { useContext, useState } from 'react';
+import { ReceiptsContext } from '../chat/ReceiptsContext.js';
 import { useUser } from '../chat/useUser.js';
 import { errorText, formatTime } from '../utils/format.js';
 
@@ -18,6 +19,7 @@ export default function MessageItem({
   onEdit,
   onDelete,
 }) {
+  const receiptFor = useContext(ReceiptsContext);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,6 +32,7 @@ export default function MessageItem({
   const pending = message.id == null;
   const canAct = isOwn && !pending && !message.deleted;
   const canEdit = canAct && message.type === 'text';
+  const receipt = isOwn ? receiptFor(message) : null;
 
   function startEdit() {
     setDraft(message.content ?? '');
@@ -144,6 +147,16 @@ export default function MessageItem({
         <span>{formatTime(message.createdAt)}</span>
         {message.editedAt && !message.deleted && <span>(edited)</span>}
         {message.status === 'sending' && <span>Sending...</span>}
+
+        {receipt && (
+          <span
+            title={receipt}
+            aria-label={receipt}
+            className={receipt === 'read' ? 'font-bold text-accent' : ''}
+          >
+            {receipt === 'sent' ? <>&#10003;</> : <>&#10003;&#10003;</>}
+          </span>
+        )}
 
         {message.status === 'failed' && (
           <>

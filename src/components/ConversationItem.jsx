@@ -1,5 +1,6 @@
 ﻿import { NavLink } from 'react-router-dom';
 import { avatarInitial, conversationTitle, formatListTime, messagePreview } from '../utils/format.js';
+import PresenceDot from './PresenceDot.jsx';
 
 export default function ConversationItem({ conversation, meId }) {
   const title = conversationTitle(conversation);
@@ -15,8 +16,16 @@ export default function ConversationItem({ conversation, meId }) {
         }`
       }
     >
-      <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-accent font-bold text-[#0b0d12]">
-        {avatarInitial(title)}
+      <div className="relative flex-none">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent font-bold text-[#0b0d12]">
+          {avatarInitial(title)}
+        </div>
+        {conversation.type === 'dm' && (
+          <PresenceDot
+            userId={conversation.otherUser?.id}
+            className="absolute -bottom-0.5 -right-0.5"
+          />
+        )}
       </div>
 
       <div className="min-w-0 flex-1">

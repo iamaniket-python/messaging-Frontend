@@ -1,14 +1,24 @@
 ﻿import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { useInbox } from '../chat/InboxContext.jsx';
+import { ReceiptsContext } from '../chat/ReceiptsContext.js';
 import { useMessages } from '../chat/useMessages.js';
-import { conversationTitle } from '../utils/format.js';
+import { useReceipts } from '../chat/useReceipts.js';
+import { useTypingEmitter, useTypingUsers } from '../chat/useTyping.js';
+import { usePresence } from '../realtime/PresenceContext.jsx';
+import { conversationTitle, formatListTime } from '../utils/format.js';
 import MessageComposer from './MessageComposer.jsx';
 import MessageList from './MessageList.jsx';
+import TypingIndicator from './TypingIndicator.jsx';
 import { linkCls } from './ui.js';
 
-function subtitleOf(conversation) {
+function subtitleOf(conversation, presence) {
   if (!conversation) return '';
+  if (conversation.type === 'dm') {
+    if (presence?.status === 'online') return 'Online';
+    if (presence?.lastSeenAt) return `Last seen ${formatListTime(presence.lastSeenAt)}`;
+    return '';
+  }
   if (conversation.type === 'group') return 'Group';
   if (conversation.type === 'channel') {
     return conversation.visibility === 'private' ? 'Private channel' : 'Public channel';
@@ -22,9 +32,15 @@ export default function ChatWindow({ conversationId }) {
   const chat = useMessages(conversationId, user);
 
   const conversation = conversations.find((c) => c.id === conversationId) ?? null;
+  const isDm = conversation?.type === 'dm';
   const showNames = conversation?.type === 'group' || conversation?.type === 'channel';
   const notFound = chat.error?.code === 'CONVERSATION_NOT_FOUND';
-  const subtitle = subtitleOf(conversation);
+
+  const typingIds = useTypingUsers(conversationId, user?.id);
+  const typing = useTypingEmitter(conversationId);
+  const receiptFor = useReceipts(conversationId, user?.id, isDm);
+  const presence = usePresence(isDm ? conversation.otherUser?.id : null);
+  const subtitle = subtitleOf(conversation, presence);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -51,7 +67,7 @@ export default function ChatWindow({ conversationId }) {
           </Link>
         </div>
       ) : (
-        <>
+        <ReceiptsContext.Provider value={receiptFor}>
           <MessageList
             items={chat.items}
             status={chat.status}
@@ -68,8 +84,13 @@ export default function ChatWindow({ conversationId }) {
             onEdit={chat.edit}
             onDelete={chat.remove}
           />
-          <MessageComposer onSend={chat.send} />
-        </>
+          <TypingIndicator userIds={typingIds} />
+          <MessageComposer
+            onSend={chat.send}
+            onTyping={typing.notifyTyping}
+            onStopTyping={typing.stopTyping}
+          />
+        </ReceiptsContext.Provider>
       )}
     </div>
   );
